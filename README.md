@@ -39,7 +39,7 @@ point = {
 	    "host_name": host_name,
 	    "metric": label,
 	}
-}
+}</pre>
 
 # License
 
