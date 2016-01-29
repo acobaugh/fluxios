@@ -14,7 +14,6 @@ import sys
 import time
 import shlex
 import signal
-import json
 from timeit import default_timer as timer
 
 # ##########################################################
