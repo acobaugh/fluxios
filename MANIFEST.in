@@ -1,0 +1,2 @@
+include README.md fluxios.cfg nagios.cfg
+graft packaging

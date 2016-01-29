@@ -1,0 +1,7 @@
+if [ ! -d /etc/systemd ]; then
+    # we are running init
+    service fluxios stop
+else
+    # we are running systemd
+    systemctl stop fluxios.service
+fi

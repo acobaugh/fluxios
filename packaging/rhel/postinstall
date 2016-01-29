@@ -1,0 +1,8 @@
+# add fluxios service
+if [ ! -d /etc/systemd ]; then
+    # we are running init
+    if ! chkconfig --add fluxios; then
+        logger -p user.err -s -t %name -- "Error adding fluxios service."
+        exit 1
+    fi
+fi

@@ -1,0 +1,12 @@
+Metadata-Version: 1.0
+Name: fluxios
+Version: 1.0
+Summary: Send nagios perfdata to InfluxDB
+Home-page: https://github.com/phalenor/fluxios
+Author: Andy Cobaugh
+Author-email: andrewcobaugh@gmail.com
+License: GPLv2
+Description: UNKNOWN
+Keywords: Nagios influxdb metrics
+Platform: UNKNOWN
+Classifier: Intended Audience :: System Administrators

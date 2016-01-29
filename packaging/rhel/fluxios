@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+# fluxios      start fluxios script
+#
+#
+# chkconfig: 345 99 01
+# description: fluxios nagios to InfluxDB script
+
+# Source function library.
+. /etc/init.d/functions
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+# Check that networking is up.
+[ "$NETWORKING" = "no" ] && exit 0
+
+prog="/usr/bin/fluxios.py"
+GRAPHIOS_USER="nagios"
+RETVAL=0
+lockfile=/var/lock/subsys/fluxios
+
+if [ -r /etc/sysconfig/fluxios ]; then
+	source /etc/sysconfig/fluxios
+fi
+
+start () {
+        echo -n $"Starting $prog: "
+        nohup su ${GRAPHIOS_USER} -s /bin/sh -c "${prog}" >/dev/null 2>&1 &
+        RETVAL=$?
+        [ $RETVAL -eq 0 ] && touch ${lockfile} && success || failure
+        echo
+}
+
+stop () {
+        echo -n $"Stopping $prog: "
+        killproc fluxios.py
+        RETVAL=$?
+        [ $RETVAL -eq 0 ] && rm -f ${lockfile}
+        echo
+}
+
+restart () {
+        stop
+        start
+}
+
+
+# See how we are called.
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  restart|reload)
+        restart
+        ;;
+  status)
+        status $prog
+        RETVAL=$?
+        ;;
+  *)
+        echo "Usage: service fluxios {start|stop|restart|reload}"
+        RETVAL=2
+        ;;
+esac
+
+exit $RETVAL
