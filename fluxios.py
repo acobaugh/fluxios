@@ -318,25 +318,29 @@ def process_spool_dir(dir):
         log.error("Exception reading spool dir({0}): {1}".format(dir, e))
         return False
     for file in files:
-        file_path = dir + '/' + file
-        if check_skip_file(file_path):
-            log.info("Skipping file: {0}".format(file))
-            continue
+        if not shutdown_flag:
+            file_path = dir + '/' + file
+            if check_skip_file(file_path):
+                log.info("Skipping file: {0}".format(file))
+                continue
 
-        num_files += 1
-        points = process_perfdata_file(file_path)
-        if send_points(points):
-            log.info(("Successfully wrote {0} points to InfluxDB")
-                .format(len(points)))
-        else:
-            log.error(("Losing {0} points due to error")
-                .format(len(points)))
+            num_files += 1
+            points = process_perfdata_file(file_path)
+            if send_points(points):
+                log.info(("Successfully wrote {0} points to InfluxDB")
+                    .format(len(points)))
+            else:
+                log.error(("Losing {0} points due to error")
+                    .format(len(points)))
 
-        if rm_file(file_path):
-            log.debug(("Deleted file: {0}").format(file_path))
+            if rm_file(file_path):
+                log.debug(("Deleted file: {0}").format(file_path))
+            else:
+                log.debug(("Could not delete file: {0}").format(file_path))
         else:
-            log.debug(("Could not delete file: {0}").format(file_path))
-    
+            log.info("fluxios shutting down")
+            print "fluxios shutting down"
+            sys.exit(0) 
 
 def send_points(points):
     """
