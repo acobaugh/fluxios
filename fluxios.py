@@ -5,6 +5,7 @@ from ConfigParser import SafeConfigParser
 from optparse import OptionParser
 from StringIO import StringIO
 from threading import Thread
+from ast import literal_eval
 import logging
 import logging.handlers
 import os
@@ -84,7 +85,7 @@ parser.add_option("-D", "--debug", dest="debug", action="store_true", default=Fa
                     help="Set log_level=logging.DEBUG")
 
 
-def convert_bool(value):
+def convert_config_value(value):
     """
     param value: string containing either "true" or "false", case insensitive
     return: boolean True or False, or the value if it's neither
@@ -95,8 +96,10 @@ def convert_bool(value):
         return False
     elif (value.lower() == "none" or value.strip() == ""):
         return None
-    return value
-
+    try:
+        return literal_eval(value)
+    except (ValueError, SyntaxError) as e:
+        return value
 
 def read_config(config_file, defaults):
     """
@@ -121,8 +124,9 @@ def read_config(config_file, defaults):
     for section in config.sections():
         config_dict[section] = {}
         for name, value in config.items(section):
-            config_dict[section][name] = convert_bool(value)
-            log.debug("file config[{0}]={1}".format(name, value))
+            config_dict[section][name] = convert_config_value(value)
+            log.debug("Parsed config option [{0}] {1} = {2}"
+                .format(section, name, config_dict[section][name]))
 
     return config_dict
 
@@ -275,15 +279,19 @@ def process_perfdata_file(file_name):
                         value = float(value)
                     fields[field] = value
 
+            tags = {
+                "service_description": service_description,
+                "host_name": host_name,
+                "metric": label
+            }
+            if isinstance(cfg['fluxios']['extra_tags'], dict):
+                tags.update(cfg['fluxios']['extra_tags'])
+
             point = {
                 "measurement": check_command,
                 "timestamp": timestamp,
                 "fields": fields,
-                "tags": {
-                    "service_description": service_description,
-                    "host_name": host_name,
-                    "metric": label,
-                }
+                "tags": tags
             }
             log.debug("Processed perfdata into point: {0}".format(point))
             points.append(point)
