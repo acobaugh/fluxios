@@ -14,6 +14,7 @@ import sys
 import time
 import shlex
 import signal
+import json
 from timeit import default_timer as timer
 
 # ##########################################################
@@ -78,6 +79,10 @@ db = 0
 parser = OptionParser("usage: %prog [options] sends nagios performance data to InfluxDB.")
 parser.add_option("-c", "--config", dest="config_file", default=config_file,
                     help="Set custom config file location.")
+parser.add_option("--show-defaults", dest="show_defaults", action="store_true", default=False,
+                    help="Print default configuration.")
+parser.add_option("-D", "--debug", dest="debug", action="store_true", default=False,
+                    help="Set log_level=logging.DEBUG")
 
 
 def convert_bool(value):
@@ -231,8 +236,9 @@ def process_perfdata_file(file_name):
             service_description = line_dict['SERVICEDESC']
             perfdata = line_dict['SERVICEPERFDATA']
             if not perfdata:
-                log.debug("perfdata string is empty while reading file {0} from line {1}"
-                    .format(file, line))
+                skipped_lines += 1
+                log.debug("perfdata string is empty while reading line file {0}: {1}"
+                    .format(file_name, line))
                 continue
             check_command = line_dict['SERVICECHECKCOMMAND'].split('!')[0]
         elif line_dict['DATATYPE'] == "HOSTPERFDATA":
@@ -280,6 +286,7 @@ def process_perfdata_file(file_name):
                     "metric": label,
                 }
             }
+            log.debug("Processed perfdata into point: {0}".format(point))
             points.append(point)
         else:
             log.debug("perfdata string from file {0} did not match, skipping: {1}"
@@ -320,6 +327,7 @@ def process_spool_dir(dir):
     for file in files:
         if not shutdown_flag:
             file_path = dir + '/' + file
+            log.debug("Processing file: {0}".format(file_path))
             if check_skip_file(file_path):
                 log.info("Skipping file: {0}".format(file))
                 continue
@@ -418,8 +426,17 @@ def loop():
 
 if __name__ == '__main__':
     (options, args) = parser.parse_args()
+    if options.show_defaults:
+        print "config_file = {0}\n".format(config_file)
+        print default_cfg.getvalue()
+        sys.exit(0)
     cfg = read_config(options.config_file, default_cfg)
+ 
     config_logger()
+    if options.debug:
+        log.info("Overriding log_level to logging.DEBUG")
+        log.setLevel(logging.DEBUG)
+    
     log.info("Configuration: {0}".format(cfg))
     
     # set up sighandler()
