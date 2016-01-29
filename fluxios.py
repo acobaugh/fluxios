@@ -215,11 +215,6 @@ def process_perfdata_file(file_name):
         return False
     # parse each line
     for line in file_array:
-        # does this look like perfdata?
-        if not re.search("^DATATYPE::", line):
-            skipped_lines += 1
-            continue
-        # log.debug('parsing: %s' % line)
         processed_lines += 1
         try:
             line_dict = dict(re.split('::', x, 1) for x in line.split('\t'))
