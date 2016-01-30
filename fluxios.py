@@ -275,9 +275,13 @@ def process_perfdata_file(file_name):
             fields = {}
             for field, value in field_candidates.items():
                 if value is not None and value.strip() != "":
-                    if isinstance(value, (int, long)):
-                        value = float(value)
-                    fields[field] = value
+                    try:
+                        fields[field] = int(value)
+                    except ValueError:
+                        try:
+                            fields[field] = float(value)
+                        except ValueError:
+                            fields[field] = value
 
             tags = {
                 "service_description": service_description,
