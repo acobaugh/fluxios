@@ -257,51 +257,50 @@ def process_perfdata_file(file_name):
         host_name = line_dict['HOSTNAME']
         timestamp = line_dict['TIMET']
 
-        # extract data from the perfdata string
-        m = re.search(perfdata_re, perfdata)
-        if m:
-            (label, value, uom, warn, crit, min, max) = m.groups()
-            field_candidates = {
-                "label": label,
-                "value": value,
-                "uom": uom,
-                "warn": warn,
-                "crit": crit,
-                "min": min,
-                "max": max
-            }
-            # for the fields that contain something, float() them if necessary
-            # and add them to the fields dict
-            fields = {}
-            for field, value in field_candidates.items():
-                if value is not None and value.strip() != "":
-                    try:
-                        fields[field] = int(value)
-                    except ValueError:
+        # extract individual metrics from the perfdata string
+        for metric in re.findall("(.*?=.+?)\s", perfdata + ' '):
+            m = re.search(perfdata_re, metric)
+            if m:
+                (label, value, uom, warn, crit, min, max) = m.groups()
+                field_candidates = {
+                    "label": label,
+                    "value": value,
+                    "uom": uom,
+                    "warn": warn,
+                    "crit": crit,
+                    "min": min,
+                    "max": max
+                }
+                # for the fields that contain something, float() them if necessary
+                # and add them to the fields dict
+                fields = {}
+                for field, value in field_candidates.items():
+                    if value is not None and value.strip() != "":
                         try:
                             fields[field] = float(value)
                         except ValueError:
                             fields[field] = value
 
-            tags = {
-                "service_description": service_description,
-                "host_name": host_name,
-                "metric": label
-            }
-            if isinstance(cfg['fluxios']['extra_tags'], dict):
-                tags.update(cfg['fluxios']['extra_tags'])
+                tags = {
+                    "service_description": service_description,
+                    "host_name": host_name,
+                    "metric": label
+                }
+                if isinstance(cfg['fluxios']['extra_tags'], dict):
+                    tags.update(cfg['fluxios']['extra_tags'])
 
-            point = {
-                "measurement": check_command,
-                "timestamp": timestamp,
-                "fields": fields,
-                "tags": tags
-            }
-            log.debug("Processed perfdata into point: {0}".format(point))
-            points.append(point)
-        else:
-            log.debug("perfdata string from file {0} did not match, skipping: {1}"
-                .format(file, perfdata))
+                point = {
+                    "measurement": check_command,
+                    "timestamp": timestamp,
+                    "fields": fields,
+                    "tags": tags
+                }
+                log.debug("Processed perfdata into point: {0}".format(point))
+                points.append(point)
+            else:
+                log.debug("perfdata metric from file {0} did not match, skipping: {1}"
+                    .format(file, metric))
+        # END: for
     end = timer()
     log.info("Processed {0}/{1} lines into {2} points in {3:.2f} seconds "
         "({4:.2f} lines/sec, {5:.2f} pts/sec)"
