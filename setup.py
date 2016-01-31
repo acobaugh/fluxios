@@ -1,6 +1,7 @@
 # vim: set ts=4 sw=4 tw=79 et :
 from setuptools import setup
 import platform
+from get_git_version import get_git_version
 
 data_files = [ ('/etc/fluxios', ['fluxios.cfg']) ]
 distro = platform.dist()[0]
@@ -15,7 +16,7 @@ if distro in ['centos', 'redhat', 'fedora']:
 
 setup(
     name='fluxios',
-    version='1.0',
+    version=get_git_version(),
     description='Send nagios perfdata to InfluxDB',
     author='Andy Cobaugh',
     author_email='andrewcobaugh@gmail.com',

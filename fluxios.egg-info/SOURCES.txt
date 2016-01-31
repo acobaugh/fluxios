@@ -1,7 +1,9 @@
 MANIFEST.in
 README.md
+RELEASE-VERSION
 fluxios.cfg
 fluxios.py
+get_git_version.py
 nagios.cfg
 setup.cfg
 setup.py

@@ -1,2 +1,2 @@
-include README.md fluxios.cfg nagios.cfg
+include README.md fluxios.cfg nagios.cfg get_git_version.py RELEASE-VERSION
 graft packaging
