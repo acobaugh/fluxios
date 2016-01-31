@@ -1,6 +1,6 @@
 dist/
 build/
 *.pyc
-/*.egg-info
+*.egg-info
 MANIFEST
 RELEASE-VERSION
