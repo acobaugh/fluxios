@@ -359,6 +359,7 @@ def process_spool_dir(dir):
             log.info("fluxios shutting down")
             print "fluxios shutting down"
             sys.exit(0) 
+    log.info("Processed {0} files".format(num_files))
 
 def send_points(points):
     """
