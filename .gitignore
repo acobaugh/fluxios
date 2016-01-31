@@ -1,6 +1,6 @@
 dist/
 build/
-*.pyc
-*.egg-info
-MANIFEST
 RELEASE-VERSION
+*.pyc
+fluxios.egg-info
+MANIFEST
