@@ -2,7 +2,7 @@
 Fluxios
 ========
 
-*Jan 28, 2016*
+*Feb 25, 2016*
 
 # Introduction
 
@@ -41,12 +41,16 @@ point = {
 	}
 }</pre>
 
+# Grafana
+
+There is a grafana scripted dashboard under grafana/. Install this under /usr/share/grafana/public/dashboards. Change nagios_host_default and nagios_ds to suit your particular installation. Adjust the links in the initial dashboard variable as appropriate.
+
 # License
 
 Fluxios is released under the [GP v2](http://www.gnu.org/licenses/gpl-2.0.html).
 
 # Todo
 * Finish this readme
-* Add command line option to print out the default configuration
 * tox unit tests
 * Either a retry or buffered approach to sending points to influxdb
+* Don't delete perfdata file unless it is older than cfg['fluxios']['interval'] seconds
