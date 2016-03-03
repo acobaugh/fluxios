@@ -41,7 +41,7 @@ spool_directory = /var/spool/nagios/fluxios
 log_file = /var/log/nagios/fluxios.log
 log_max_size = 24
 log_keep = 4
-log_level = logging.INFO
+log_level = INFO
 interval = 15
 measurement_prefix =
 batch_size = 500
@@ -166,6 +166,7 @@ def config_logger():
     log.info("Added file log ({0}), removing console log handler" \
         .format(cfg['fluxios']['log_file']))
     log.removeHandler(console_handler)
+    log.setLevel(logging.getLevelName(cfg['fluxios']['log_level']))
 
 def init_influxdb_client():
     global db
