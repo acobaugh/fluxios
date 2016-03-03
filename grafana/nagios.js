@@ -180,9 +180,18 @@ function build_panels(id, host_name, measurement, service_description, metric) {
 		+ " AND service_description= '" + service_description + "'"
 		+ " AND metric = '" + metric + "'";
 	return $.ajax({
+		type: 'GET',
 		url: base_url + '/datasources/proxy/' + id + '/query?epoch=ms&q=' + q,
 		dataType: 'json'
-	}).done(function(data) {
+	})
+	.fail(function(data) {
+		error("Failed to build panel for "
+		+ "measurement = " + measurement 
+		+ ", service = " + service_description 
+		+ ", metric = " + metric 
+		+ ": " + data.status + " " + data.statusText);
+	})
+	.done(function(data) {
 		// build a lookup table to select a value by column name
 		var column_lookup = [];
 		for (var j in data.results[0].series[0].columns) {
@@ -285,7 +294,7 @@ function error(text) {
 			{
 				title: 'Error',
 				type: 'text',
-				span: 1,
+				span: 12,
 				height: 1,
 				"mode": "text",
 				"content": text
