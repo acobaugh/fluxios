@@ -6,7 +6,9 @@
 var window, document, ARGS, $, jQuery, moment, kbn;
 
 // some global settings
-var nagios_ds = 'Nagios';
+var nagios_db_name = 'nagios'; // name of the influxdb db
+var nagios_ds = 'Nagios'; // name of the grafana datasource
+var nagios_ds_id = 3;
 var nagios_host_default = "smith.ait.psu.edu";
 var base_url = window.location.protocol + '//' + window.location.host + '/api';
 
@@ -98,81 +100,53 @@ var dashboard = {
 };
 
 return function(callback) {
-	var id = -1;
-	$.when(
-		get_datasources().then(function(data) {
-			for (var ds in data) {
-				if (data.hasOwnProperty(ds)) {
-					try {
-						if (data[ds].name == nagios_ds) {
-							id = data[ds].id;
-						}
-					} catch(TypeError) {
-						error("Could not read any datasources from InfluxDB");
-					}
-				}
+	$.when(get_metrics(nagios_ds_id, host_name)).done(function(data) {
+		var column_lookup = [];
+		var deferreds = [];
+		for (var i in data.results[0].series) {
+			// build a lookup table to select a value by column name
+			for (var j in data.results[0].series[i].columns) {
+				column_lookup[data.results[0].series[i].columns[j]] = j;
 			}
-			if (id == -1) {
-				error("Could not lookup id for database" + nagios_ds);
-			} else {
-				$.when(get_metrics(id, host_name)).done(function(data) {
-					var column_lookup = [];
-					var deferreds = [];
-					for (var i in data.results[0].series) {
-						// build a lookup table to select a value by column name
-						for (var j in data.results[0].series[i].columns) {
-							column_lookup[data.results[0].series[i].columns[j]] = j;
-						}
-						for (var k in data.results[0].series[i].values) {
-							var service_description = data.results[0].series[i].values[k][column_lookup['service_description']];
-							var metric = data.results[0].series[i].values[k][column_lookup['metric']];
-							var command = data.results[0].series[i].name;
-							deferreds.push(build_panels(id, host_name, command, service_description, metric));
-						}
-					}
-					// build a panel object for every metric
-					$.when.apply($, deferreds).done(function() {
-						var keys = Object.keys(panels);
-						keys.sort();
-						// now create the rows and add the panels
-						for (var i=0; i < keys.length; i++) {
-							dashboard.rows.push({
-								"title": keys[i],
-								"height": '250px',
-								"collapsable": true,
-								"showTitle": true,
-								"panels": panels[keys[i]]
-							});
-						}
-					});
+			for (var k in data.results[0].series[i].values) {
+				var service_description = data.results[0].series[i].values[k][column_lookup['service_description']];
+				var metric = data.results[0].series[i].values[k][column_lookup['metric']];
+				var command = data.results[0].series[i].name;
+				deferreds.push(build_panels(nagios_ds_id, host_name, command, service_description, metric));
+			}
+		}
+		// build a panel object for every metric
+		$.when.apply($, deferreds).done(function() {
+			var keys = Object.keys(panels);
+			keys.sort();
+			// now create the rows and add the panels
+			for (var i=0; i < keys.length; i++) {
+				dashboard.rows.push({
+					"title": keys[i],
+					"height": '250px',
+					"collapsable": true,
+					"showTitle": true,
+					"panels": panels[keys[i]]
 				});
-			} // END else
-		}) // END get_datasources()
-	) // END when()
-	.done(function() {
-		callback(dashboard);
-	});
+			}
+		});
+	}); // END done()
+
+	callback(dashboard);
 };
 
-function get_datasources() {
-	// look up nagios ds id
-	return $.ajax({
-		type: 'GET',
-		url: base_url + '/datasources',
-		dataType: 'json'
-	});
-}
-
-function get_metrics(id, host_name) {
+function get_metrics(nagios_ds_id, host_name) {
 	var q = "SHOW SERIES WHERE host_name = '" + host_name + "' AND nagios_host = '" + nagios_host + "'";
 	return $.ajax({
 		type: 'GET',
-		url: base_url + '/datasources/proxy/' + id + '/query?epoch=ms&q=' + q,
+		url: base_url + '/datasources/proxy/' + nagios_ds_id + '/query?epoch=ms&db=' + nagios_db_name + '&q=' + q,
 		dataType: 'json'
 	});
 }
 
-function build_panels(id, host_name, measurement, service_description, metric) {
+function build_panels(nagios_ds_id, host_name, measurement, service_description, metric) {
+	// escape single quotes in metric
+	metric = metric.replace(/'/g, "\\'");
 	var q = "SELECT"
 		+ " last(uom) as uom, last(min) as min, last(warn) as warn, last(crit) as crit" 
 		+ " FROM \"" + measurement + "\""
@@ -181,7 +155,7 @@ function build_panels(id, host_name, measurement, service_description, metric) {
 		+ " AND metric = '" + metric + "'";
 	return $.ajax({
 		type: 'GET',
-		url: base_url + '/datasources/proxy/' + id + '/query?epoch=ms&q=' + q,
+		url: base_url + '/datasources/proxy/' + nagios_ds_id + '/query?epoch=ms&db=' + nagios_db_name + '&q=' + q,
 		dataType: 'json'
 	})
 	.fail(function(data) {
