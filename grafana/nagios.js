@@ -9,7 +9,7 @@ var window, document, ARGS, $, jQuery, moment, kbn;
 var nagios_db_name = 'nagios'; // name of the influxdb db
 var nagios_ds = 'Nagios'; // name of the grafana datasource
 var nagios_ds_id = 3;
-var nagios_host_default = "smith.ait.psu.edu";
+var nagios_host_default = "your.nagios.host.com";
 var base_url = window.location.protocol + '//' + window.location.host + '/api';
 
 
@@ -66,29 +66,8 @@ var dashboard = {
 				"current": { "text": host_name, "value": host_name }
 			}
 		]
-	},
+	}
 	"links": [
-		{
-			"type": "link",
-			"icon": "external link",
-			"url": "https://nagios.ait.psu.edu/nagios/cgi-bin/status.cgi?host=" + host_name,
-			"targetBlank": true,
-			"title": "(Primary) Nagios"
-		},
-		{
-			"type": "link",
-			"icon": "external link",
-			"url": "https://wesson.offsite.psu.edu/nagios/cgi-bin/status.cgi?host=" + host_name,
-			"targetBlank": true,
-			"title": "(Standby) Nagios"
-		},
-		{
-			"type": "link",
-			"icon": "external link",
-			"url": "https://nis.ais.psu.edu/cgi-bin/Assetsv3_CGI.exe?STEP=SEARCH&VIEW=BASIC&SEARCHTEXT=" + host_name,
-			"targetBlank": true,
-			"title": "Asset Tracking"
-		},
 		{
 			"type": "link",
 			"icon": "dashboard",
