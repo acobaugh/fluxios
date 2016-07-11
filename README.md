@@ -2,7 +2,7 @@
 Fluxios
 ========
 
-*Feb 25, 2016*
+*Jul 11, 2016*
 
 # Introduction
 
@@ -54,3 +54,4 @@ Fluxios is released under the [GP v2](http://www.gnu.org/licenses/gpl-2.0.html).
 * tox unit tests
 * Either a retry or buffered approach to sending points to influxdb
 * Don't delete perfdata file unless it is older than cfg['fluxios']['interval'] seconds
+* Use the new Grafana /api/datasources/id/:name to lookup ds id
