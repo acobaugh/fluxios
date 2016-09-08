@@ -172,7 +172,11 @@ def init_influxdb_client():
     global db
 
     if not cfg['influxdb']['cluster']:
-        from influxdb import InfluxDBClient
+        try:
+            from influxdb import InfluxDBClient
+        except ImportError as e:
+            log.exception("Could not import influxdb module: {0}".format(e))
+            sys.exit(1) 
         db = InfluxDBClient(
             host=cfg['influxdb']['host'],
             port=cfg['influxdb']['port'],
@@ -187,7 +191,10 @@ def init_influxdb_client():
             proxies=cfg['influxdb']['proxies']
         )
     else:
-        from influxdb import InfluxDBClusterClient
+        try:
+            from influxdb import InfluxDBClusterClient
+        except ImportError as e:
+            log.exception("Could not import influxdb module: {0}".format(e))
         db = InfluxDBClusterClient(
             hosts=cfg['influxdb']['hosts'],
             username=cfg['influxdb']['username'],
