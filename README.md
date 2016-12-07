@@ -47,11 +47,10 @@ There is a grafana scripted dashboard under grafana/. Install this under /usr/sh
 
 # License
 
-Fluxios is released under the [GP v2](http://www.gnu.org/licenses/gpl-2.0.html).
+Fluxios is released under the [GPLv2](http://www.gnu.org/licenses/gpl-2.0.html).
 
 # Todo
 * Finish this readme
 * tox unit tests
 * Either a retry or buffered approach to sending points to influxdb
 * Don't delete perfdata file unless it is older than cfg['fluxios']['interval'] seconds
-* Use the new Grafana /api/datasources/id/:name to lookup ds id
