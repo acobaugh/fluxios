@@ -37,25 +37,29 @@ function main(callback) {
 	.then(get_metrics)
 	.then(parse_metrics)
 	.then(build_panels)
-	.then(build_rows);
-
-	callback(dashboard);
+	.then(build_rows)
+	.then(function() {
+		callback(dashboard);
+	});
 }
 
 function parse_metrics(data) {
-	var column_lookup = [];
 	var metrics = [];
-	for (var i in data.results[0].series) {
-		// build a lookup table to select a value by column name
-		for (var j in data.results[0].series[i].columns) {
-			column_lookup[data.results[0].series[i].columns[j]] = j;
-		}
-		for (var k in data.results[0].series[i].values) {
-			var service_description = data.results[0].series[i].values[k][column_lookup['service_description']];
-			var metric = data.results[0].series[i].values[k][column_lookup['metric']];
-			var measurement = data.results[0].series[i].name;
-			metrics.push({ 'measurement' : measurement, 'service_description' : service_description, 'metric' : metric});
-		}
+	for (var s in data.results[0].series[0].values) {
+		var result = {};
+		data.results[0].series[0].values[s][0].split(',').forEach(function(x){
+			var arr = x.split('=');
+			if (!arr[1]) {
+				result["measurement"] = arr[0];
+			} else {
+			        result[arr[0]] = arr[1];
+			}
+		});
+		metrics.push({ 
+			'measurement': result["measurement"],
+			'service_description': result["service_description"].replace(/\\/g, ""),
+			'metric' : result["metric"].replace(/'/g, "\\'")
+		});
 	}
 	return metrics;
 }
@@ -107,45 +111,50 @@ function build_panels(metrics) {
 
 
 function build_panel(m) {
-	// escape single quotes in metric
-	var metric = m.metric.replace(/'/g, "\\'");
-	var q = "SELECT"
-		+ " last(uom) as uom, last(min) as min, last(warn) as warn, last(crit) as crit" 
-		+ " FROM \"" + m.measurement + "\""
-		+ " WHERE host_name = '" + host_name + "'"
-		+ " AND service_description= '" + m.service_description + "'"
-		+ " AND metric = '" + metric + "'";
-	return $.ajax({
-		type: 'GET',
-		url: base_url + '/datasources/proxy/' + nagios_ds_id + '/query?epoch=ms&db=' + nagios_db_name + '&q=' + q,
-		dataType: 'json'
-	})
-	.fail(function(data) {
-		error("Failed to build panel for "
-		+ "measurement = " + m.measurement 
-		+ ", service = " + m.service_description 
-		+ ", metric = " + metric 
-		+ ": " + data.status + " " + data.statusText);
-	})
-	.done(function(data) {
-		// build a lookup table to select a value by column name
-		var column_lookup = [];
-		for (var j in data.results[0].series[0].columns) {
-			column_lookup[data.results[0].series[0].columns[j]] = j;
-		}
-		var values = data.results[0].series[0].values[0];
-		var uom = values[column_lookup['uom']];
-		var warn = values[column_lookup['warn']];
-		var crit = values[column_lookup['crit']];
-		var min = values[column_lookup['min']];
+	if (typeof m.metric == 'undefined') {
+		error("No m.metric is undefined");
+		return;
+	} else {
+		var q = "SELECT"
+			+ " last(uom) as uom, last(min) as min, last(warn) as warn, last(crit) as crit" 
+			+ " FROM \"" + m.measurement + "\""
+			+ " WHERE host_name = '" + host_name + "'"
+			+ " AND service_description= '" + m.service_description + "'"
+			+ " AND metric = '" + m.metric + "'";
+		return $.ajax({
+			type: 'GET',
+			url: base_url + '/datasources/proxy/' + nagios_ds_id + '/query?epoch=ms&db=' + nagios_db_name + '&q=' + q,
+			dataType: 'json'
+		})
+		.fail(function(data) {
+			console.log("fail(): q = " + q + " statusText = " + data.status +" "+ data.statusText);
+			error("Failed to build panel for q = " + q + " statusText = " + data.status +" "+ data.statusText);
+		})
+		.done(function(data) {
+			//create one row per service description	
+			if (! panels.hasOwnProperty(m.service_description)) {
+				panels[m.service_description] = [];
+			}
 
-		//create one row per service description	
-		if (! panels.hasOwnProperty(m.service_description)) {
-			panels[m.service_description] = [];
-		}
-		panels[m.service_description].push(panel(m.measurement, metric, m.service_description, uom, warn, crit));
-	}); // END done()
-} // END build_panels()
+			var column_lookup = [];
+			if (data.results[0].series) {
+				// build a lookup table to select a value by column name
+				for (var j in data.results[0].series[0].columns) {
+					column_lookup[data.results[0].series[0].columns[j]] = j;
+				}
+				var values = data.results[0].series[0].values[0];
+				var uom = values[column_lookup['uom']];
+				var warn = values[column_lookup['warn']];
+				var crit = values[column_lookup['crit']];
+				var min = values[column_lookup['min']];
+
+				panels[m.service_description].push(panel(m.measurement, m.metric, m.service_description, uom, warn, crit));
+			} else {
+				panels[m.service_description].push(panel(m.measurement, m.metric, m.service_description, null, null, null));
+			}
+		}); // END done()
+	}
+} // END build_panel()
 
 function error(text) {
 	dashboard.rows.push({
@@ -239,7 +248,6 @@ function init_dashboard() {
 function panel(measurement, metric, service_description, uom, warn, crit) {
 	var panel = {
 		"title": metric,
-		"id": service_description + metric,
 		"type": 'graph',
 		"span": 4,
 		"collapsable": true,
