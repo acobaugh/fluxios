@@ -1,5 +1,5 @@
-#!/usr/bin/python -tt
-# vim: set ts=4 sw=4 tw=79 et :
+#!/usr/bin/env python 
+# vim: set ts=4 sw=4 et :
 
 from ConfigParser import SafeConfigParser
 from optparse import OptionParser
@@ -270,24 +270,22 @@ def process_perfdata_file(file_name):
             m = re.search(perfdata_re, metric)
             if m:
                 (label, value, uom, warn, crit, min, max) = m.groups()
-                field_candidates = {
-                    "label": label,
+                numeric_fields = {
                     "value": value,
-                    "uom": uom,
                     "warn": warn,
                     "crit": crit,
                     "min": min,
                     "max": max
                 }
-                # for the fields that contain something, float() them if necessary
-                # and add them to the fields dict
-                fields = {}
-                for field, value in field_candidates.items():
-                    if value is not None and value.strip() != "":
+                fields = {"label": label, "uom": uom}
+                for field, value in numeric_fields.items():
+                    if value is not None and value.strip():
+                        value = re.sub('[^0-9.]','', value)
                         try:
                             fields[field] = float(value)
                         except ValueError:
-                            fields[field] = value
+                            log.error("Failed to float() '{0}' = '{1}' for '{2}'@'{3}'"
+                                    .format(field, value, service_description, host_name))
 
                 tags = {
                     "service_description": service_description,
