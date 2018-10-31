@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/python 
 # vim: set ts=4 sw=4 et :
 
 from ConfigParser import SafeConfigParser
@@ -34,6 +34,7 @@ log.info("Fluxios starting...")
 SIGNALS_TO_NAMES_DICT = dict((getattr(signal, n), n) \
     for n in dir(signal) if n.startswith('SIG') and '_' not in n )
 
+
 # default configuration
 default_cfg = StringIO("""\
 [fluxios]
@@ -41,7 +42,7 @@ spool_directory = /var/spool/nagios/fluxios
 log_file = /var/log/nagios/fluxios.log
 log_max_size = 24
 log_keep = 4
-log_level = INFO
+log_level = logging.INFO
 interval = 15
 measurement_prefix =
 batch_size = 500
@@ -135,6 +136,7 @@ def config_logger():
     """
     sets up fluxios config
     """
+
     try:
         cfg['fluxios']['log_max_size'] = int(cfg['fluxios']['log_max_size'])
     except ValueError:
@@ -166,7 +168,7 @@ def config_logger():
     log.info("Added file log ({0}), removing console log handler" \
         .format(cfg['fluxios']['log_file']))
     log.removeHandler(console_handler)
-    log.setLevel(logging.getLevelName(cfg['fluxios']['log_level']))
+    log.setLevel(getattr(logging, str(cfg['fluxios']['log_level']), logging.INFO))
 
 def init_influxdb_client():
     global db
