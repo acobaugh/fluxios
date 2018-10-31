@@ -4,6 +4,8 @@ Description=fluxios - a script to send nagios perfdata to InfluxDB
 [Service]
 ExecStart=/usr/bin/fluxios.py
 Restart=on-abort
+User=nagios
+Group=nagios
 
 [Install]
 WantedBy=multi-user.target

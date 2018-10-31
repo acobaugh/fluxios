@@ -16,7 +16,7 @@
 [ "$NETWORKING" = "no" ] && exit 0
 
 prog="/usr/bin/fluxios.py"
-GRAPHIOS_USER="nagios"
+USER="nagios"
 RETVAL=0
 lockfile=/var/lock/subsys/fluxios
 
@@ -26,7 +26,7 @@ fi
 
 start () {
         echo -n $"Starting $prog: "
-        nohup su ${GRAPHIOS_USER} -s /bin/sh -c "${prog}" >/dev/null 2>&1 &
+        nohup su ${USER} -s /bin/sh -c "${prog}" >/dev/null 2>&1 &
         RETVAL=$?
         [ $RETVAL -eq 0 ] && touch ${lockfile} && success || failure
         echo
